@@ -170,9 +170,9 @@ public class PersonIsVaccinated extends JFrame implements ActionListener
 			default:
 				prediction = "error: no prediction was found";
 				break;
-    	}
+    		}
 
-    	JOptionPane.showMessageDialog(PersonIsVaccinated.this, "Prediction: " + prediction);
+    		JOptionPane.showMessageDialog(PersonIsVaccinated.this, "Prediction: " + prediction);
 	}
 
 }
