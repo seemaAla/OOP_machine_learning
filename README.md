@@ -1,5 +1,4 @@
-# OOP_machine_learning
-# theme: personIsVaccinated
+# personIsVaccinated Frequency table
 
 				
 AGE_GROUP,   HEALTH_STATUS,   MEDICAL_SYSTEM_ACCESS,   LOCATION_TYPE,   TOTAL,   VACCINATED,   NOT VACCINATED	
