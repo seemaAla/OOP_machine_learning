@@ -1,179 +1,176 @@
-
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JComboBox;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map; 
 
-public class PersonIsVaccinated extends JFrame implements ActionListener
+
+public class PersonIsVaccinated
 {
-	//creating variables
-	JLabel age_group;
-	JLabel health_status;
-	JLabel medical_access;
-	JLabel location_type;
-	JComboBox<String> age_menu;
-	JComboBox<String> health_menu;
-	JComboBox<String> medical_access_menu;
-	JComboBox<String> location_menu;
-	JButton predict_button;
-	JPanel panel_features;
-	JPanel panel_buttons;
+	//variables for level 2 
+	private Map<String, int[]> frequency_table = new HashMap<>();
+	private String model_trained = "false";
+	private String prediction;
 
+	//creating an object 
+	FileProcessor my_file = new FileProcessor("vaccination_dataset.csv"); 
 	
-	String[] age_options;
-	String[] health_options;
-	String[] medical_access_options;
-	String[] location_options;
 
-	
-	public PersonIsVaccinated() 
+	public String[] predict(String age, String health, String medical, String location)
 	{
-		//setting frame
-		setTitle("Person is Vaccinated prediction model");
-		setSize(300, 150);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLayout(null);
-		
-
-		//creating panels
-		panel_features = new JPanel(null);
-		panel_features.setBackground(Color.LIGHT_GRAY);
-		panel_features.setBounds(10, 10, 360, 150);
-
-		panel_buttons = new JPanel(null);
-		panel_buttons.setBackground(Color.BLUE);
-		panel_buttons.setBounds(10, 170, 360, 80);
-
-
+		//concatinating user input into one string
+		String user_input = age + "-" + health + "-" + medical + "-" + location;
 	
-		//age group
-		age_group = new JLabel("age group:");
-		age_group.setBounds(10, 10, 100, 20);
-		
-		age_options = new String[] {"adult", "child"};
-		age_menu = new JComboBox<>(age_options);
-		age_menu.setBounds(120, 10, 100, 20);
-		age_menu.addActionListener(this);
+		//if model has not been trained yet use hardcoded predictions from level 1
+		if (model_trained == "false")
+		{
+			//there are 16 combination of features 
+			//takes user input and gives externally calculated predictions 
+			switch (user_input) 
+			{
+				//feature combinations for if person is not vaccinated
+				case "adult-healthy-high-rural":
+				case "adult-healthy-high-urban":
+				case "adult-healthy-low-urban":
+				case "adult-vulnerable-low-urban":
+				case "child-healthy-low-rural":
+				case "child-healthy-low-urban":
+				case "child-vulnerable-high-rural":
+				case "child-vulnerable-high-urban":
+					prediction = "person is NOT vaccinated";
+					break;
 
+				//feature combinations for if person is vaccinated
+				case "adult-vulnerable-high-urban":
+				case "adult-vulnerable-high-rural":
+				case "adult-vulnerable-low-rural":
+				case "adult-healthy-low-rural":
+				case "child-vulnerable-low-urban":
+				case "child-vulnerable-low-rural":
+				case "child-healthy-high-urban":
+				case "child-healthy-high-rural":
+					prediction = "person is vaccinated";
+					break;
 
-		//health status 
-		health_status = new JLabel("Health status:");
-		health_status.setBounds(10, 40, 100, 20);
-		
-		health_options = new String[] {"healthy", "vulnerable"};
-		health_menu = new JComboBox<>(health_options);
-		health_menu.setBounds(120, 40, 100, 20);
-		health_menu.addActionListener(this);
+				default:
+					prediction = "feature combination is not recognized";
+            		break;
+			}
 
+		}
+		//else if train button has been pressed, then predictions are read from a csv file 
+		else if(model_trained == "true")
+		{
+			//gets values for the user_input feature combination and saves it to counts_array variable
+			int[] counts_array = frequency_table.get(user_input);
 
-		//access to medical system 
-		medical_access = new JLabel("Access to medical system:");
-		medical_access.setBounds(10, 70, 150, 20);
-		
-		medical_access_options = new String[] {"high", "low"};
-		medical_access_menu = new JComboBox<>(medical_access_options);
-		medical_access_menu.setBounds(170, 70, 100, 20);
-		medical_access_menu.addActionListener(this);
+			//index 0 holds counts for number of vaccinated people for that feature combination
+			int vaccinatedCount = counts_array[0];
+			int notVaccinatedCount = counts_array[1];
 
+			//if number of vaccinated people for that specific feature combination is more that the non vaccinated people
+			//then the prediction is person is vaccinated
+			if (vaccinatedCount > notVaccinatedCount) 
+			{
+				prediction = "person is vaccinated";
+			} 
+			else if (notVaccinatedCount > vaccinatedCount) 
+			{
+				prediction = "person is NOT vaccinated";
+			}
+			else 
+			{
+				//else if the non vaccinated and vaccinated probability is the same, prediction cannot be made 
+				prediction = "unable to predict, there is a 50/50 chance person is vaccinated ";
+			}
+			
+		}
 
-		//location type 
-		location_type = new JLabel("Location type:");
-		location_type.setBounds(10, 100, 100, 20);
-		
-		location_options = new String[] {"urban", "rural"};
-		location_menu = new JComboBox<>(location_options);
-		location_menu.setBounds(120, 100, 100, 20);
-		location_menu.addActionListener(this);
+		String[] result = {prediction, model_trained};
 
-
-
-		//button to start prediction
-		predict_button = new JButton("Predict");
-		predict_button.setBounds(120, 20, 120, 30);
-		predict_button.addActionListener(this);
-
-
-
-		//add labels and dropdown menus to panels
-		panel_features.add(age_group);
-		panel_features.add(age_menu);
-		panel_features.add(health_status);
-		panel_features.add(health_menu);
-		panel_features.add(medical_access);
-		panel_features.add(medical_access_menu);
-		panel_features.add(location_type);
-		panel_features.add(location_menu);
-
-		panel_buttons.add(predict_button);
-
-		add(panel_features);
-		add(panel_buttons);
-		
-		
-		
-		setVisible(true);
+		return result;
 	}
 
 
- 	//action when one of the buttons are clicked
-    @Override
-    public void actionPerformed(ActionEvent e) 
-    {
-		if (e.getSource() == predict_button) 
-		{
-            handlePredictButton();
-        } 
-    }
 
-	private void handlePredictButton()
+    
+	public void handleTrainButton()
+	{ 
+		//open csv file and save content to file_data arraylist
+        ArrayList<String[]> file_data = my_file.readFile();
+
+		//clear previous training data
+		frequency_table.clear();
+
+		//iterates over each row in file
+		for (String[] row : file_data)
+		{
+			//stores features and label from each row in a variable
+			String age = row[0];
+			String health = row[1];
+			String medical = row[2];
+			String location = row[3];
+			String label = row[4]; 
+
+			
+			String feature_combination = age + "-" + health + "-" + medical + "-" + location;
+
+			//start counts if first time seeing this feature combination while reading from file
+			if (!frequency_table.containsKey(feature_combination)) 
+			{
+				//adds feature combination key to hashmap with values of {num_vaccinateed, num_not_vaccinated} as zero initially
+				frequency_table.put(feature_combination, new int[]{0, 0}); 
+			}
+
+			//gets correspoding int values for this key feature_combination and saves it to counts array variable
+			int[] counts_array = frequency_table.get(feature_combination);
+
+
+			//if label in that row is vaccinated increase the number of vaccinated counts for that feature combination
+			if (label.equals("yes")) 
+			{
+				counts_array[0]++; 
+			}
+			//otherwise if label in that row is not vaccinated increase the not vaccinated count
+			else if (label.equals("no")) 
+			{
+				counts_array[1]++;
+			}
+		}
+
+		//model is now trained 
+		model_trained = "true"; 
+
+	}
+
+
+	public void handleAddRowButton(String age, String health, String medical, String location)
 	{
-		String age = (String) age_menu.getSelectedItem();
-		String health = (String) health_menu.getSelectedItem();
-		String medical = (String) medical_access_menu.getSelectedItem();
-		String location = (String) location_menu.getSelectedItem();
-		
-		//concatinating user input into one string
-		String user_input = age + "-" + health + "-" + medical + "-" + location;
-
-		String prediction;
-
-		switch (user_input) 
+		String label;
+	
+		//loop to keep asking for user input until a valid label given or user pressed cancel 
+		while (true) 
 		{
-			case "adult-healthy-high-rural":
-			case "adult-healthy-high-urban":
-			case "adult-healthy-low-urban":
-			case "adult-vulnerable-low-urban":
-			case "child-healthy-low-rural":
-			case "child-healthy-low-urban":
-			case "child-vulnerable-high-rural":
-			case "child-vulnerable-high-urban":
-				prediction = "person is NOT vaccinated";
-				break;
+			label = JOptionPane.showInputDialog("Has the person been vaccinated (yes or no):");
 
-			case "adult-vulnerable-high-urban":
-			case "adult-vulnerable-high-rural":
-			case "adult-vulnerable-low-rural":
-			case "adult-healthy-low-rural":
-			case "child-vulnerable-low-urban":
-			case "child-vulnerable-low-rural":
-			case "child-healthy-high-urban":
-			case "child-healthy-high-rural":
-				prediction = "person is vaccinated";
-				break;
-
-			default:
-				prediction = "error: no prediction was found";
-				break;
-    		}
-
-    		JOptionPane.showMessageDialog(PersonIsVaccinated.this, "Prediction: " + prediction);
+			//checks if user presses cancel
+			if (label == null) 
+			{
+				JOptionPane.showMessageDialog(null, "Failed to add row");
+				break; 
+			}
+			//if input valid new row will be added
+			else if (label.equals("yes") || label.equals("no")) 
+			{
+				my_file.addRow(age, health, medical, location, label);
+				break; 
+			} 
+			else 
+			{
+				JOptionPane.showMessageDialog(null, "Invalid input please enter 'yes' or 'no'");
+			}
+		}
 	}
 
 }
+	
 
